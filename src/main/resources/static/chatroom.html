@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html class=" responsive touch" lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+    <title>兴化市卷本</title>
+    <link rel="shortcut icon" href="img/home_01.svg"/>
+    <style>
+        html {
+            height: 100%;
+        }
+
+        html body {
+            height: 100%;
+            margin: 0;
+            background-color: #ededed;
+        }
+
+        .layer {
+            padding: 0;
+            height: 100%;
+        }
+
+        .layer-title {
+            text-align: center;
+            height: 50px;
+            line-height: 50px;
+            background-color: #393d49;
+
+            font-weight: 700;
+            color: white;
+            font-size: 18px;
+        }
+
+        .chat-main {
+            overflow-x: hidden;
+            overflow-y: auto;
+            background-color: #ededed;
+            position: absolute;
+            top: 50px;
+            bottom: 60px;
+            width: 100%;
+        }
+
+        .chat-mine {
+            text-align: right;
+            padding-right: 0px!important;
+            padding-left: 40px;
+        }
+        .chat-main ul li {
+            position: relative;
+            font-size: 0;
+            min-height: 68px;
+            padding-right: 40px;
+            margin-bottom: 10px;
+        }
+
+        .chat-mine .chat-user {
+            left: auto;
+            right: -8px;
+        }
+
+        .chat-user {
+            position: absolute;
+            left: -8px;
+        }
+        .chat-text, .chat-user {
+            display: inline-block;
+            vertical-align: top;
+            font-size: 18px;
+            color: #555555;
+        }
+
+        .chat-mine .chat-text {
+            margin-left: 0;
+            background-color: #95ec69;
+            color: #051f00;
+        }
+
+        .chat-text {
+            position: relative;
+            line-height: 22px;
+            margin-top: 25px;
+            padding: 8px 15px 6px 15px;
+            background-color: #ffffff;
+            border-radius: 3px;
+            color: #191919;
+            word-break: break-all;
+            text-align: justify;
+        }
+        .chat-footer {
+            background-color: #f7f7f7;
+            padding: 10px 0px;
+            text-align: center;
+            position: absolute;
+            bottom: 0px;
+            width: 100%;
+
+            border-top: 1px solid #d2d2d2;
+
+        }
+
+        .chat-footer textarea {
+            width: 70%;
+            padding: 5px 8px;
+            line-height: 25px;
+            border: none;
+            overflow: auto;
+            resize:none;
+            overflow-y:hidden;
+            vertical-align: middle;
+            outline: none;
+            font-size: 18px;
+            font-family: sans-serif;
+            border-radius: 3px;
+            transform: translateY(-5%);
+            caret-color: #07ac56;
+        }
+
+        .chat-footer button {
+            font-size: 18px;
+            height: 35px;
+            margin-left: 5px;
+            padding: 0 15px;
+            background-color: #07c160;
+            color: white;
+            border-radius: 5px;
+            border-width: 0;
+            outline: none;
+            transform: translateY(3%);
+        }
+
+        ul {
+            padding: 15px 15px 0px;
+            margin-bottom: 0px;
+            margin-top: 0px;
+        }
+
+        #responsive_menu_logo {
+            position: absolute;
+            top: 9px;
+            cursor: pointer;
+            width: 36px;
+            height: 31px;
+            left: 10px;
+        }
+
+        i {
+            font-style: normal;
+            font-size: 15px;
+            color: #888888;
+        }
+
+    </style>
+</head>
+<body onload="joinRoom()">
+    <div class="layer">
+        <div id="responsive_menu_logo" onclick="redirectToTale()">
+            <img src="img/undo.png" height="100%">
+        </div>
+        <div class="layer-title">
+            聊天室
+        </div>
+        <div class="chat-main" onscroll="updateScrollTop()">
+            <ul id="content"></ul>
+        </div>
+        <div class="chat-footer">
+            <textarea id="sendMsg" rows="1" onkeyup="autoResize(this)" onfocus="textOnfocus()"></textarea>
+            <button type="button" onclick="sendMsg()">发送</button>
+        </div>
+    </div>
+<script>
+    // WebSocket后台连接地址
+    var url = "ws://" + window.location.host + "/MJGS/page_room/";
+    // WebSocket客户端
+    var ws = null;
+    // 用户名称，随机数
+    var username = localStorage.getItem("username");
+    // 当前滚动高度，用于判断是否需要滚动到最新消息
+    var scrollTop = 0;
+    // 最大滚动高度，用于判断是否需要滚动到最新消息
+    var maxScrollTop = 0;
+    // 手机键盘是否为弹出状态
+    var isShowKeyboard = false;
+
+    /**
+     * 加入聊天室
+     */
+    function joinRoom() {
+        // 如果已经建立连接，跳过
+        if (ws) {
+            return;
+        }
+
+        if (username == null) {
+            username = Math.floor(Math.random() * 10000) + 1;// 可均衡获取 1 到 10000 的随机整数。
+            localStorage.setItem("username", username);
+        }
+
+        ws = new WebSocket(url + username);
+
+        //与服务端建立连接触发，下面4个都是回调函数，比如前端调用了ws.send()方法，后台会执行对应的OnMsg()方法，
+        // 然后前端就会执行ws.onmessage()这个回调函数
+        ws.onopen = function () {
+            console.log("与服务器成功建立连接")
+        };
+        //服务端推送消息触发
+        ws.onmessage = function (ev) {
+            talking(ev.data);
+        };
+        //发生错误触发
+        ws.onerror = function () {
+            console.log("连接错误")
+        };
+        //正常关闭触发
+        ws.onclose = function () {
+            console.log("连接关闭");
+            ws = null;
+        };
+    }
+
+    /**
+     * 退出聊天室
+     */
+    function exitRoom() {
+        closeWebSocket();
+    }
+
+    /**
+     * 向后台发送消息
+     */
+    function sendMsg() {
+        // 如果断开连接了，那么重新连接
+        if(!ws){
+            joinRoom();
+        }
+        //消息发送
+        if(document.getElementById("sendMsg").value != "") {
+            var date = new Date();
+            var timeStr = (date.getMonth()+1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
+            ws.send(document.getElementById("sendMsg").value + "&" + timeStr);
+
+            // 清空文本输入框
+            document.getElementById("sendMsg").value = "";
+            document.getElementById("sendMsg").rows = 1;
+        }
+    }
+
+    function closeWebSocket() {
+        if(ws){
+            ws.close();
+            ws = null;
+        }
+    }
+
+    /**
+     * 展示后台发送过来的消息
+     */
+    function talking(content) {
+        // 在键盘消失后，scrollTop会恢复为正常值，但maxScrollTop不会，所以需要手动修改
+        if(isShowKeyboard && scrollTop < maxScrollTop) {
+            maxScrollTop = scrollTop;
+            isShowKeyboard = false;
+        }
+
+        const textarea = document.getElementById('content');
+
+        var msgInfos = content.split("&");
+        if (username == msgInfos[0]) {
+            textarea.innerHTML = textarea.innerHTML +
+                "<li class=\"chat-mine\"><div class=\"chat-user\"><i>" +
+                msgInfos[2] +
+                "</i>【" +
+                msgInfos[0]+
+                "】</div><div class=\"chat-text\">\n" +
+                msgInfos[1] +
+                "</div></li>";
+        } else {
+            textarea.innerHTML = textarea.innerHTML +
+                "<li><div class=\"chat-user\">【" +
+                msgInfos[0]+
+                "】<i>" +
+                msgInfos[2] +
+                "</i></div><div class=\"chat-text\">\n" +
+                msgInfos[1] +
+            "                    </div>\n" +
+            "                </li>";
+        }
+
+        // 如果页面最下方显示信息为最新信息，那么后面一直自动滚动展示最新的信息，否则页面不做滚动
+        if(Math.abs(scrollTop - maxScrollTop) < 50) {
+            textarea.lastElementChild.scrollIntoView({behavior:"smooth"});
+
+            // 因为新消息展示设置了平滑滚动，所以在给maxScrollTop赋值之前，需要等待0.5秒
+            setTimeout(function() {
+                scrollTop = document.getElementsByClassName("chat-main")[0].scrollTop;
+                if(scrollTop > maxScrollTop) {
+                    maxScrollTop = scrollTop;
+                }
+            }, 500);
+        }
+    }
+
+    // 最小高度
+    var minRows = 1;
+    // 最大高度，超过则出现滚动条
+    var maxRows = 4;
+
+    /**
+     * 工具方法,textarea根据输入文本长度自适应高度
+     */
+    function autoResize(t) {
+        if (t.scrollTop == 0) t.scrollTop = 1;
+        while (t.scrollTop == 0) {
+            if (t.rows > minRows)
+                t.rows--;
+            else
+                break;
+            t.scrollTop = 1;
+            if (t.rows < maxRows)
+                t.style.overflowY = "hidden";
+            if (t.scrollTop > 0) {
+                t.rows++;
+                break;
+            }
+        }
+        while (t.scrollTop > 0) {
+            if (t.rows < maxRows) {
+                t.rows++;
+                if (t.scrollTop == 0) t.scrollTop = 1;
+            }
+            else {
+                t.style.overflowY = "auto";
+                break;
+            }
+        }
+    }
+
+    /**
+     * 返回到故事页面
+     */
+    function redirectToTale() {
+        window.history.go(-1);
+    }
+
+    /**
+     * 生成随机数，用于标识用户
+     * @returns {string}
+     */
+    function uuid() {
+        var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+        var uuid = [], i;
+        var r;
+
+        uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
+        uuid[14] = '4';
+
+        for (i = 0; i < 36; i++) {
+            if (!uuid[i]) {
+                r = 0 | Math.random() * 16;
+                uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r];
+            }
+        }
+
+        return uuid.join('');
+    }
+
+    /**
+     * 监控用户滑动事件，用于更新scrollTop变量
+     */
+    function updateScrollTop() {
+        scrollTop = document.getElementsByClassName("chat-main")[0].scrollTop;
+        if(scrollTop > maxScrollTop) {
+            maxScrollTop = scrollTop;
+        }
+    }
+
+    /**
+     * 监控输入框的聚焦事件
+     * 功能：在键盘弹出后，键盘会遮盖住下方的消息，现在需要将最下方的消息滚动到页面中央
+     */
+    function textOnfocus() {
+        isShowKeyboard = true;
+        // 键盘的弹出需要一定的时间，所以滚动也要相应的延迟
+        if(document.getElementById('content').lastElementChild != null) {
+            setTimeout(function(){
+                document.getElementById('content').lastElementChild.scrollIntoView({behavior:"smooth"});
+            },500);
+        }
+    }
+
+    /**
+     * 监听手机键盘消失事件
+     * 功能：键盘隐藏后，将maxScrollTop设置为键盘弹出之前的值
+     */
+    document.getElementById("sendMsg").addEventListener("focusout", function () {
+        setTimeout(function () {
+            // 在键盘消失后，scrollTop会自动恢复为正常值，但maxScrollTop不会，所以需要手动修改
+            if(isShowKeyboard && scrollTop < maxScrollTop) {
+                maxScrollTop = scrollTop;
+                isShowKeyboard = false;
+            }
+        }, 500);
+    });
+
+    document.addEventListener('visibilitychange', function () {
+        // 用户息屏、或者切到后台运行 （离开页面）
+        if (document.visibilityState === 'hidden') {
+            document.getElementById('content').innerHTML = "";
+            maxScrollTop = 0;
+            if (ws != null) {
+                closeWebSocket();
+            }
+        }
+
+        // 用户打开或回到页面
+        if (document.visibilityState === 'visible' && ws == null) {
+            joinRoom();
+        }
+    });
+
+</script>
+</body>
+</html>

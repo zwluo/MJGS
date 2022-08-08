@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+    <title>中国民间文学</title>
+
+    <link rel="shortcut icon" href="img/home_01.svg"/>
+    <link href="css/bookshelf.css" rel="stylesheet"/>
+
+    <script type="text/javascript" src="js/vue/vue.min.js"></script>
+    <script type="text/javascript" src="js/vue/axios.min.js"></script>
+</head>
+<body>
+
+<div class="responsive_header" style="height: 24px;">
+    中国民间文学
+</div>
+
+<div class="content-wrap">
+    <div class="span_1_of_4" v-for="bookInfo in bookList">
+        <div class="card-item">
+            <a :href="bookInfo.url+'?bookId='+bookInfo.id"  title="bookInfo.title">
+                <img :src="bookInfo.cover">
+            </a>
+            <h3><a :href="bookInfo.url" title="bookInfo.name">{{bookInfo.title}}</a></h3>
+        </div>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '.content-wrap',
+        data: {
+            bookList: []
+        },
+        created: function () {
+            const that = this;
+            axios.get("/MJGS/getBookList")
+                .then(function (response) {
+                    if (response.status == 200) {
+                        that.bookList = response.data;
+                    } else {
+                        alert('访问错误,请检查网络');
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        }
+    });
+</script>
+</body>
+</html>

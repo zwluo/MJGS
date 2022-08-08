@@ -1,0 +1,98 @@
+.tale-content {
+    background: #c8e8c8;
+    padding: 10px 15px;
+    border-radius: 15px;
+    font-size: 20px;
+    font-family: sans-serif;
+    line-height: 1.8;
+    /*每行字体平均分布*/
+    text-align: justify;
+    /*阴影*/
+    box-shadow: 0 0 15px 0 #8a8a8a;
+}
+
+p {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.bgDiv {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    /*垂直居中*/
+    align-items: center;
+    padding-top: 20px;
+    color: white;
+}
+
+.submenu_store7 {
+    padding-bottom: 15px;
+}
+
+.yellowBg {
+    background-color: #f6f4ec;
+}
+
+.greenBg {
+    background-color: #e6f0e6;
+}
+
+.blueBg {
+    background-color: #e3f5fa;
+}
+
+.orangeBg {
+    background-color: #f0e6db;
+}
+
+.pinkBg {
+    background-color: #f5e9ef;
+}
+
+.bgBt {
+    width: 15%;
+    height: 20px;
+}
+
+button {
+    color: white;
+    background: #36a2bd;
+    border-radius: 10px;
+    line-height: 30px;
+    padding: 0 18px;
+    border-width: 0px;
+    outline: none;
+    font-size: 18px;
+    font-family: inherit;
+    font-weight: 500;
+}
+
+.feedbackDiv {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.ballad {
+    text-align: center;
+    font-size: 16px;
+    padding: 10px 5px;
+}
+
+textarea {
+    height: 100px;
+    width: 95%;
+    font: inherit;
+    font-size: 18px;
+    resize: none;
+    padding: 8px 8px;
+}
+
+.submenuitem.active {
+    background-color: #36a2bd;
+}
+
+/*自定义vue标签，用于解决vue语法会有延迟加载显现{{xxx}}的问题*/
+[v-cloak] {
+    display: none;
+}
