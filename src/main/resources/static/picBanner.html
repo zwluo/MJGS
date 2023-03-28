@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes"/>
+    <title>中国民间文学</title>
+    <script type="text/javascript" src="./js/vue/vue.min.js"></script>
+    <style>
+
+        .responsive_header {
+            background: #393d49;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 20;
+            box-shadow: 0 0 7px 0 rgb(100 100 100 / 75%);
+            overflow: hidden;
+            padding: 13px 8px;
+            font-weight: 700;
+            color: white;
+            font-size: 18px;
+        }
+
+        button {
+            height: 30px;
+            width: 60px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+
+        #fullPage{
+            display: none;
+            background: black;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 19930428;
+        }
+        #fullPage img{
+            display: block;
+            width: 100%;
+        }
+        #canvas{
+            width: 100%;
+            height: 100%;
+            background: none;
+            display: block;
+        }
+    </style>
+
+</head>
+<body>
+<div class="main">
+    <div class="responsive_header" style="height: 24px;">
+        {{bookName}}
+    </div>
+
+    <div style="margin-top: 60px;margin-bottom: 60px;text-align: center;">
+        <div id="picDiv" style="background-color: #e6f0e6;">
+            <img width="100%" :src="imgUrl">
+        </div>
+    </div>
+
+    <div style="position: fixed;
+    padding: 13px 8px;
+    bottom: 0;
+    text-align: center;
+    left: 0;
+    right: 0;
+    background: #393d49;color: white;">
+        <button @click="previous()">上一页</button>
+        <input style="width: 30px;text-align: center;font-size: 16px;" type="number" v-model="currentPage"> /{{maxPageNum}}
+        <button @click="go()" style="height: 25px;width: 45px;">跳转</button>
+        <button @click="next()">下一页</button>
+    </div>
+</div>
+<script>
+    new Vue({
+        el: '.main',
+        data: {
+            imgUrl: "",
+            currentPage: 1,
+            serverUrl: "http://221.224.159.210:8119/story/img/",
+            maxPageNum: 1,
+            bookName: ""
+        },
+        created: function () {
+            // 获取书籍id
+            let bookId = GetQueryString("bookId");
+            if (bookId == null) {
+                bookId = 1;
+            }
+            this.serverUrl = this.serverUrl + bookId + "/";
+            bookId = parseInt(bookId);
+
+            fetch('./books.json')
+                .then((response) => response.json())
+                .then((json) => {
+                    for (let key in json) {
+                        let data = json[key];
+                        if (bookId === data.id) {
+                            this.bookName = data.title;
+                            this.maxPageNum = data.maxPageNum;
+                            break;
+                        }
+                    }
+                });
+            this.imgUrl = this.serverUrl + this.currentPage + ".png";
+            localStorage.setItem("cachePageNum", this.currentPage);
+        },
+        methods: {
+            previous: function () {
+                if (this.currentPage == null || this.currentPage === "") {
+                    let cachePageNum = localStorage.getItem("cachePageNum");
+                    if (cachePageNum != null) {
+                        this.currentPage = cachePageNum;
+                    } else {
+                        this.currentPage = 1;
+                    }
+                }
+
+                if (this.currentPage < 2) {
+                    alert("已经是第1页");
+                    return;
+                }
+
+                this.currentPage = parseInt(this.currentPage) - 1;
+                this.imgUrl = this.serverUrl + this.currentPage + ".png";
+                localStorage.setItem("cachePageNum", this.currentPage);
+            },
+            next: function () {
+                if (this.currentPage == null || this.currentPage === "") {
+                    let cachePageNum = localStorage.getItem("cachePageNum");
+                    if (cachePageNum != null) {
+                        this.currentPage = cachePageNum;
+                    } else {
+                        this.currentPage = 1;
+                    }
+                }
+
+                if (this.currentPage > parseInt(this.maxPageNum)-1) {
+                    alert("已经是最后一页");
+                    return;
+                }
+
+                this.currentPage = parseInt(this.currentPage) + 1;
+                this.imgUrl = this.serverUrl + this.currentPage + ".png";
+                localStorage.setItem("cachePageNum", this.currentPage);
+            },
+            go: function () {
+                if (this.currentPage === "" || this.currentPage < 1 || this.currentPage > parseInt(this.maxPageNum)) {
+                    alert("页码不存在");
+                    return;
+                }
+
+                this.imgUrl = this.serverUrl + this.currentPage + ".png";
+                localStorage.setItem("cachePageNum", this.currentPage);
+            }
+        },
+        watch: {    //监控字段值的变化
+            imgUrl: function(data) {
+                // 切换内容时，定位到最上面
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    });
+
+    function GetQueryString(name) {
+        let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        let r = window.location.search.substr(1).match(reg);
+        if (r != null) return unescape(r[2]);
+        return null;
+    }
+</script>
+</body>
+</html>
